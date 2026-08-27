@@ -1,0 +1,12 @@
+{
+  "name": "TimeTrack",
+  "short_name": "TimeTrack",
+  "description": "A precise stopwatch with laps, splits and keyboard control.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12101a",
+  "theme_color": "#47266b",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}

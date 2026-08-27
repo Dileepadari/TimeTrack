@@ -1,67 +1,74 @@
-This project contains stopwatch which we can start , pause, resume and lap and reset
+<p align="center">
+  <img src="./src/assets/logo-mark.png" width="96" alt="ADK DEV">
+</p>
 
+# TimeTrack
 
-In the project directory, you can run:
+A stopwatch for the browser: start, pause, resume, and mark laps, with the splits
+kept in a table you can read or export.
 
-### `npm start`
+It exists because most web stopwatches count ticks instead of measuring time, so
+they fall behind whenever the browser throttles a background tab. TimeTrack reads
+a monotonic clock on every frame, which means the number on screen is the elapsed
+time whether the tab was in front the whole run or not.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+For architecture, state model, and setup, see **[DEVDOC.md](./DEVDOC.md)**.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Features
 
-### `npm test`
+### The clock
+- Start, pause, resume, and reset
+- Reads to hundredths of a second, and widens from `MM:SS.cc` to `HH:MM:SS.cc`
+  once an hour has passed
+- A ring around the readout sweeps once per minute, so you can see the seconds
+  moving without reading digits
+- Stays accurate in a background tab; the reading is measured, never accumulated
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Laps
+- Mark a lap at any point while the clock runs
+- Each lap shows its split (time since the previous lap) and the running total
+- Fastest and slowest lap are flagged once there are at least two of them
+- Best, average, and worst appear above the table
+- A bar under each split is scaled against the slowest lap, so the shape of a
+  session is readable at a glance
+- Copy CSV puts every lap on the clipboard, oldest first, ready for a spreadsheet
 
-### `npm run build`
+### Everything else
+- Keyboard control: <kbd>Space</kbd> to start or pause, <kbd>L</kbd> to lap,
+  <kbd>R</kbd> to reset
+- Light, dark, or follow-the-system theme, remembered between visits
+- Your time and laps survive a refresh or a closed tab, restored paused
+- Works down to a phone-width screen
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## How a session goes
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Press Start, or hit <kbd>Space</kbd>. The status under the clock reads Running.
+2. Press Lap whenever you want a marker. The newest lap appears at the top of the
+   table with its split.
+3. Press Pause to hold the reading. Nothing is lost - Resume picks up from the
+   same number.
+4. Press Reset to clear both the clock and the laps. Reset is only available once
+   the clock has actually moved.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Reset is not undoable, so copy the CSV first if the laps matter.
 
-### `npm run eject`
+## Reload behaviour
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Closing the tab or refreshing keeps your elapsed time and your laps, and brings
+them back **paused**. The clock deliberately does not keep counting through a
+reload: nothing on the page can know how long the tab was gone, and inventing that
+number would make the reading wrong. Press Resume to carry on.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Tech stack
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+React 19 on Vite, no state or UI libraries. Tested with Vitest and Testing Library.
+The detail lives in [DEVDOC.md](./DEVDOC.md).
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Getting started
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Setup, scripts, and deployment are covered in [DEVDOC.md](./DEVDOC.md).
