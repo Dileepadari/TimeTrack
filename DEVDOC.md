@@ -13,9 +13,11 @@ timing approach, and setup. For what the app does from a user's point of view, s
 - [Render loop](#render-loop)
 - [Persistence](#persistence)
 - [Keyboard shortcuts](#keyboard-shortcuts)
+- [What is announced](#what-is-announced)
 - [Theming](#theming)
 - [Frontend structure](#frontend-structure)
 - [Testing](#testing)
+- [Continuous integration](#continuous-integration)
 - [Local development](#local-development)
 - [Build and deployment](#build-and-deployment)
 - [Known constraints and gotchas](#known-constraints-and-gotchas)
@@ -100,6 +102,25 @@ let the display show `01.00` at 995ms, one hundredth ahead of the actual time.
 
 ## State model
 
+```mermaid
+stateDiagram-v2
+    [*] --> Ready
+    Ready --> Running: start, anchor = now()
+    Running --> Paused: pause, banked += now() - anchor
+    Paused --> Running: start, anchor = now()
+    Running --> Running: lap, prepend {index, split, total}
+    Running --> Ready: reset
+    Paused --> Ready: reset
+    Paused --> Paused: restore from localStorage
+
+    note right of Paused
+        A restored session always lands here.
+        Nothing on the page can know how long
+        the tab was closed, so counting through
+        a reload would be inventing a number.
+    end note
+```
+
 `useStopwatch` uses `useReducer`. The reducer is pure and takes the timestamp in
 the action rather than reading the clock itself, which is what makes the whole
 state machine testable without timers.
@@ -175,11 +196,51 @@ the key up in a map (`space`, `l`, `r`). It:
 
 - ignores events carrying Meta, Ctrl, or Alt, so browser shortcuts keep working
 - ignores events from inputs, textareas, selects, and contenteditable
-- calls `preventDefault()` on a match, which stops Space from scrolling the page
-  and from re-triggering whichever button currently has focus
+- **stands aside when the focused element already owns the key**: `Space` and
+  `Enter` belong to a focused `<button>`, `<a>`, `<summary>` or anything with
+  `role="button"`
+- calls `preventDefault()` only after that, which stops Space scrolling the page
+  in the case where nothing else wanted it
+
+That third rule is not a refinement. Without it the binding ran first and
+`preventDefault` swallowed the button's own activation, so tabbing to Reset and
+pressing Space started the clock instead of resetting it, and **every control in
+the app was unreachable by keyboard** on a page whose own hint list tells you to
+use keys. `src/keyboard.test.jsx` covers it.
+
+Letter shortcuts (`L`, `R`) are not claimed by any button, so they keep working
+wherever focus happens to be.
 
 The bindings map is read through a ref synced in a layout effect, so callers can
 pass a fresh object literal every render without rebinding the listener.
+
+## What is announced
+
+The readout changes 60 times a second and is written straight into the DOM from
+the animation frame, so `role="timer"` carries `aria-live="off"` on purpose: a
+live region there would read a new number every frame and make the page unusable
+with a screen reader on.
+
+The reading is carried in words instead, by `describeDuration`, through
+`role="status"` regions that are empty while the clock runs:
+
+| Moment | What is announced |
+|---|---|
+| Pause | `Paused at 27.88 seconds` |
+| Reset, and on load | `Stopwatch ready` |
+| Lap | `Lap 5, split 2.99 seconds, total 9.52 seconds` |
+| Copy succeeded | `Laps copied to the clipboard` |
+| Copy blocked | `The browser blocked the clipboard` |
+
+The timer's accessible name tracks its state separately (`Stopwatch running`,
+`Stopwatch paused`, `Stopwatch ready`), so moving focus to it says what it is
+doing without reciting the digits.
+
+The visible `Running` / `Paused` / `Ready` line is `aria-hidden`, because the
+status region already says it and two sources would read it twice.
+
+`src/a11y.test.jsx` covers all of the above. Before it existed, `describeDuration`
+was written, documented and unit tested, and **nothing in the app called it**.
 
 ## Theming
 
@@ -254,6 +315,22 @@ persistence in one test cannot leak into the next.
 Not covered: the clipboard path in `CopyButton` (jsdom has no real clipboard, and
 the assertion would only test the mock), and CSS.
 
+## Continuous integration
+
+`.github/workflows/ci.yml`, on push to `main`, on every pull request and on
+demand. No scheduled run.
+
+| Job | What it proves |
+|---|---|
+| `build` | `eslint`, the suite with a coverage floor (85% lines, 80% branches) and a production build, on Node 20.19 and 24. 20.19 is the floor `engines.node` declares |
+| `audit` | `npm audit --omit=dev --audit-level=low`, because the runtime tree is react and react-dom only, so any advisory there is real. The whole tree is checked separately at `high` |
+| `hygiene` | Plain ASCII, the entity forms of the same characters, and a check that no `node_modules`, `dist`, `coverage` or capture harness is tracked |
+| `readme-pair` | Regenerates `README-light.md` and fails on a diff; checks every locally referenced image exists |
+
+The tracked-output check is enforced rather than trusted to `.gitignore`:
+`node_modules` was tracked here until 2026-08-27, and `git add -f` ignores
+`.gitignore` entirely.
+
 ## Local development
 
 ```bash
@@ -320,3 +397,7 @@ re-renders while running, so the hour boundary is handled by
 [Persistence](#persistence). If someone asks for the clock to keep running through
 a reload, the honest version needs a wall-clock timestamp stored alongside `banked`
 and an explicit user decision about what closing the tab means.
+
+---
+
+Working notes, dead ends and decisions too small for this document: [not_for_you.md](./not_for_you.md).

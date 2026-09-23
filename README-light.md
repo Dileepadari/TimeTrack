@@ -1,3 +1,5 @@
+<!-- Generated from README.md by scripts/build-light-readme.mjs. Do not edit by hand. -->
+
 <div align="center">
 
 <picture>
@@ -23,7 +25,7 @@
 
 **[Developer documentation](./DEVDOC.md)** &middot; [Screenshots](#screenshots) &middot; [Features](#features) &middot; [Getting started](#getting-started)
 
-<p><b>Dark mode</b> &middot; <a href="./README-light.md">View this page in light mode</a></p>
+<p><b>Light mode</b> &middot; <a href="./README.md">View this page in dark mode</a></p>
 
 </div>
 
@@ -43,15 +45,15 @@ Every image is a real 1440x900 viewport render of the running app. This page sho
 <table>
   <tr>
     <td width="33%" valign="top">
-      <img src="./docs/screenshots/dark/01-ready.png" alt="The clock at zero, before the first start" loading="lazy">
+      <img src="./docs/screenshots/light/01-ready.png" alt="The clock at zero, before the first start" loading="lazy">
       <p align="center"><b>Ready</b><br><sub>Reset is dimmed until the clock has actually moved.</sub></p>
     </td>
     <td width="33%" valign="top">
-      <img src="./docs/screenshots/dark/02-running.png" alt="The clock running, with five laps and their splits" loading="lazy">
+      <img src="./docs/screenshots/light/02-running.png" alt="The clock running, with five laps and their splits" loading="lazy">
       <p align="center"><b>Running</b><br><sub>The ring sweeps once a minute; laps arrive newest first.</sub></p>
     </td>
     <td width="33%" valign="top">
-      <img src="./docs/screenshots/dark/03-paused.png" alt="The clock paused, holding its reading, with the lap table intact" loading="lazy">
+      <img src="./docs/screenshots/light/03-paused.png" alt="The clock paused, holding its reading, with the lap table intact" loading="lazy">
       <p align="center"><b>Paused</b><br><sub>The reading holds. Resume carries on from the same number.</sub></p>
     </td>
   </tr>
@@ -60,7 +62,7 @@ Every image is a real 1440x900 viewport render of the running app. This page sho
 <details>
 <summary><b>Past an hour</b></summary>
 <br>
-<img src="./docs/screenshots/dark/04-long-session.png" alt="A session past an hour, showing the wider HH:MM:SS.cc readout and seven laps" loading="lazy">
+<img src="./docs/screenshots/light/04-long-session.png" alt="A session past an hour, showing the wider HH:MM:SS.cc readout and seven laps" loading="lazy">
 <p align="center"><sub>The readout widens to <code>HH:MM:SS.cc</code> once an hour has passed, and the splits column widens with it.</sub></p>
 </details>
 
