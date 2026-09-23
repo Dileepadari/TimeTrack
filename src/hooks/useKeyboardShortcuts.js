@@ -1,3 +1,5 @@
+/** Document-level single-key shortcuts, and the cases where they stand aside. */
+
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
 const EDITABLE = new Set(['INPUT', 'TEXTAREA', 'SELECT']);

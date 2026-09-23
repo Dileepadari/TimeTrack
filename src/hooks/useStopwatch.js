@@ -1,3 +1,8 @@
+/**
+ * The stopwatch itself: a small state machine over a monotonic clock, plus the
+ * subscription the display repaints from.
+ */
+
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 
 const STORAGE_KEY = 'timetrack:session:v1';
@@ -194,4 +199,9 @@ export function useStopwatch() {
   };
 }
 
+/**
+ * The reducer and its constants, exported for the unit tests only. Nothing in
+ * the app imports this: the state machine is worth testing directly, and doing
+ * so through the rendered component would only test React.
+ */
 export const __testing = { STORAGE_KEY, reducer, initialState };

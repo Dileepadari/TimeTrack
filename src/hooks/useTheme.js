@@ -1,3 +1,5 @@
+/** Theme preference, persisted, with "system" meaning "let the CSS decide". */
+
 import { useCallback, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'timetrack:theme:v1';
@@ -38,4 +40,5 @@ export function useTheme() {
   return { mode, setMode, cycle };
 }
 
+/** The cycle order, in the order the button steps through it. */
 export const THEME_MODES = MODES;

@@ -1,3 +1,11 @@
+/**
+ * Inline SVG icons.
+ *
+ * Every icon shares `base`, which marks it `aria-hidden` and unfocusable: each
+ * one sits inside a control that already carries the accessible name, so an
+ * icon that announced itself would say the same thing twice.
+ */
+
 const base = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -8,6 +16,8 @@ const base = {
   'aria-hidden': true,
   focusable: false,
 };
+
+/* Each icon is a bare path on the shared `base` props; none carries a label. */
 
 export const PlayIcon = (props) => (
   <svg {...base} {...props}>

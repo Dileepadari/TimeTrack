@@ -1,3 +1,5 @@
+/** The lap table, its best/average/worst summary, and the CSV copy button. */
+
 import { useMemo } from 'react';
 import { describeDuration, formatDuration } from '../lib/format.js';
 import CopyButton from './CopyButton.jsx';

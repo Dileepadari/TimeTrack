@@ -9,6 +9,12 @@ import { useTheme } from './hooks/useTheme.js';
 import { lapsToCsv } from './lib/format.js';
 import logoMark from './assets/logo-mark.png';
 
+/**
+ * The whole app: one clock, its controls, and the lap list beside them.
+ *
+ * The keyboard bindings live here rather than in the controls, so the
+ * shortcuts work wherever focus happens to be on the page.
+ */
 export default function App() {
   const stopwatch = useStopwatch();
   const { mode, cycle } = useTheme();

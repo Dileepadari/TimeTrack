@@ -1,3 +1,8 @@
+/**
+ * The running clock: the digits, the sweep ring, and what a screen reader is
+ * told about them.
+ */
+
 import { useEffect, useRef } from 'react';
 import { describeDuration, splitDuration } from '../lib/format.js';
 
