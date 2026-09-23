@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Lint, test and build - Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # package.json declares engines.node >= 20.19, so the floor is tested too.
+        node: ["20.19", "24"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - name: Tests with a coverage floor
+        run: npx vitest run --coverage --coverage.thresholds.lines=85 --coverage.thresholds.branches=80
+
+      - run: npm run build
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      # Runtime dependencies are react and react-dom only, so a production
+      # advisory here is a real one. The dev tree is audited separately and at a
+      # lower bar because vite and vitest never ship to a user.
+      - name: Production dependencies, no advisories at all
+        run: npm audit --omit=dev --audit-level=low
+
+      - name: Whole tree, nothing high or critical
+        run: npm audit --audit-level=high
+
+  hygiene:
+    name: Plain ASCII, no build output, no stray harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: No em dashes, arrows or dingbats
+        run: |
+          if git ls-files -z \
+              | xargs -0 grep -nP '[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{2190}-\x{21FF}\x{2014}\x{2013}\x{FE0F}]' \
+                --binary-files=without-match; then
+            echo "Found an em dash, en dash, arrow or dingbat. Use -, -> or plain words."
+            exit 1
+          fi
+          echo "clean"
+
+      # The same characters written as HTML entities are pure ASCII on disk and
+      # render as exactly what the rule removes, so the grep above cannot see
+      # them. Found this way in a sibling repository.
+      - name: No entity form of the same characters
+        run: |
+          if git ls-files -z \
+              | xargs -0 grep -nP '&(mdash|ndash|rarr|larr|harr|rArr|lArr|#821[123469]|#x201[34]|#8594|#8592|#x219[02]);' \
+                --binary-files=without-match; then
+            echo "Found an entity that renders as an em dash, en dash or arrow."
+            exit 1
+          fi
+          echo "clean"
+
+      # node_modules was tracked until 2026-08-27 and the pre-rewrite commit is
+      # still served by GitHub, so this one is enforced rather than trusted to
+      # .gitignore, which `git add -f` ignores.
+      - name: No node_modules, dist or capture harness is tracked
+        run: |
+          if git ls-files | grep -E '^(node_modules|dist|coverage)/|__capture\.html$'; then
+            echo "Build output, dependencies or a capture harness is tracked."
+            exit 1
+          fi
+          echo "clean"
+
+  readme-pair:
+    name: README-light.md is in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Regenerate and compare
+        run: |
+          node scripts/build-light-readme.mjs
+          git diff --exit-code README-light.md
+
+      - name: Every local image referenced by either README exists
+        run: |
+          missing=0
+          for f in $(grep -ho 'src="[^"]*"' README.md README-light.md \
+                     | sed 's/^src="//; s/"$//' | grep -v '^https\?://' | sort -u); do
+            if [ ! -f "$f" ]; then
+              echo "missing: $f"
+              missing=1
+            fi
+          done
+          [ "$missing" = 0 ] || exit 1
+          echo "every referenced image exists"
