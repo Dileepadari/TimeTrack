@@ -176,6 +176,12 @@ export function useStopwatch() {
   return {
     running: state.running,
     laps: state.laps,
+    /**
+     * The settled elapsed time, exact while paused. The live value moves every
+     * frame through `subscribe`, which is right for digits and wrong for an
+     * announcement, so anything spoken reads this instead.
+     */
+    banked: state.banked,
     /** True once the clock has moved, whether or not it is still running. */
     started: state.running || state.banked > 0,
     subscribe,

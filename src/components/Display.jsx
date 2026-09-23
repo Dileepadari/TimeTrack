@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { splitDuration } from '../lib/format.js';
+import { describeDuration, splitDuration } from '../lib/format.js';
 
 const RADIUS = 46;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -10,7 +10,7 @@ const pad = (value) => String(value).padStart(2, '0');
  * animation frame instead of through state, so a 60fps sweep costs one text
  * assignment per segment rather than a full re-render of the app.
  */
-export default function Display({ subscribe, getElapsed, running, started }) {
+export default function Display({ subscribe, getElapsed, running, started, banked }) {
   const hoursRef = useRef(null);
   const minutesRef = useRef(null);
   const secondsRef = useRef(null);
@@ -52,11 +52,16 @@ export default function Display({ subscribe, getElapsed, running, started }) {
   }, [subscribe, getElapsed]);
 
   return (
+    // `aria-live="off"` is deliberate: the digits change 60 times a second and
+    // are written straight to the DOM, so announcing them would be unusable.
+    // The visually hidden status below carries the same reading in words, once
+    // the clock settles.
     <div
       className="display"
       ref={rootRef}
       role="timer"
       aria-live="off"
+      aria-label={running ? 'Stopwatch running' : started ? 'Stopwatch paused' : 'Stopwatch ready'}
       data-running={running ? 'true' : 'false'}
     >
       <svg className="display__ring" viewBox="0 0 100 100" aria-hidden="true">
@@ -94,9 +99,18 @@ export default function Display({ subscribe, getElapsed, running, started }) {
         </span>
       </div>
 
-      <p className="display__status">
-        <span className="display__pip" aria-hidden="true" />
+      <p className="display__status" aria-hidden="true">
+        <span className="display__pip" />
         {running ? 'Running' : started ? 'Paused' : 'Ready'}
+      </p>
+
+      {/*
+        Spoken only when the clock settles. While it runs this is empty, so a
+        screen reader is not read a new number every frame; the moment it stops,
+        it hears the time it stopped at.
+      */}
+      <p className="visually-hidden" role="status">
+        {running ? '' : started ? `Paused at ${describeDuration(banked)}` : 'Stopwatch ready'}
       </p>
     </div>
   );

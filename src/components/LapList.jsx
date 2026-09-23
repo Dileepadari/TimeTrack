@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { formatDuration } from '../lib/format.js';
+import { describeDuration, formatDuration } from '../lib/format.js';
 import CopyButton from './CopyButton.jsx';
 
 /**
@@ -23,9 +23,21 @@ export default function LapList({ laps, csv }) {
   }, [laps]);
 
   const anyHours = laps.some((lap) => lap.total >= 3600000);
+  // Laps arrive newest first, so the head of the list is the one just marked.
+  const latest = laps[0];
 
   return (
     <section className="laps" aria-labelledby="laps-heading">
+      {/*
+        A lap is a deliberate act with no other feedback: the row appears in a
+        list a screen reader user is probably not focused on. Announcing the
+        newest one is the only way they hear that the key press landed.
+      */}
+      <p className="visually-hidden" role="status">
+        {latest
+          ? `Lap ${latest.index}, split ${describeDuration(latest.split)}, total ${describeDuration(latest.total)}`
+          : ''}
+      </p>
       <header className="laps__header">
         <h2 id="laps-heading" className="laps__title">
           Laps

@@ -40,6 +40,7 @@ export default function App() {
             getElapsed={stopwatch.getElapsed}
             running={stopwatch.running}
             started={stopwatch.started}
+            banked={stopwatch.banked}
           />
           <Controls
             running={stopwatch.running}
