@@ -6,6 +6,22 @@ const isTyping = (target) =>
   target instanceof HTMLElement &&
   (EDITABLE.has(target.tagName) || target.isContentEditable);
 
+/** Elements the browser already activates on Space or Enter. */
+const NATIVELY_ACTIVATED = new Set(['BUTTON', 'A', 'SUMMARY', 'OPTION']);
+
+/**
+ * True when the focused element owns this key press already.
+ *
+ * Without this, tabbing to Reset and pressing Space started the clock instead
+ * of resetting it: the global binding ran and `preventDefault` swallowed the
+ * button's own activation, so every control was unreachable by keyboard even
+ * though each one is a real `<button>`.
+ */
+const focusOwnsKey = (target, key) =>
+  (key === 'space' || key === 'enter') &&
+  target instanceof HTMLElement &&
+  (NATIVELY_ACTIVATED.has(target.tagName) || target.getAttribute('role') === 'button');
+
 /**
  * Binds single-key shortcuts on the document. Keys are matched case
  * insensitively; the map is read through a ref so callers can pass a fresh
@@ -25,10 +41,13 @@ export function useKeyboardShortcuts(bindings) {
       if (isTyping(event.target)) return;
 
       const key = event.key === ' ' ? 'space' : event.key.toLowerCase();
+      if (focusOwnsKey(event.target, key)) return;
+
       const handler = bindingsRef.current[key];
       if (!handler) return;
 
-      // Space would otherwise scroll the page or re-fire the focused button.
+      // Space scrolls the page by default, and nothing is focused that wanted
+      // it, because focusOwnsKey has already bowed out if something did.
       event.preventDefault();
       handler(event);
     };
