@@ -14,14 +14,16 @@ permissions:
   contents: read
 
 jobs:
+  # Lint and build on the floor that engines.node declares, so the claim is
+  # checked rather than asserted. The app itself runs fine there; it is only the
+  # test environment that needs newer, which is why tests are a separate job.
   build:
-    name: Lint, test and build - Node ${{ matrix.node }}
+    name: Lint and build - Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # package.json declares engines.node >= 20.19, so the floor is tested too.
-        node: ["20.19", "24"]
+        node: ["20.19", "22", "24"]
     steps:
       - uses: actions/checkout@v7
 
@@ -34,10 +36,34 @@ jobs:
 
       - run: npm run lint
 
+      - run: npm run build
+
+  # jsdom 30 reaches for `webidl.util.markAsUncloneable`, which Node added in 22,
+  # so the suite cannot run on the 20.19 floor: every worker dies before a single
+  # test loads, and vitest reports "no tests" rather than a failure. That is a
+  # limit of the test environment, not of the app, so the floor keeps building
+  # above and the tests run where jsdom works.
+  test:
+    name: Tests - Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      # A worker that fails to start makes vitest report "no tests" and exit 0,
+      # so the coverage floor is what turns that into a red build.
       - name: Tests with a coverage floor
         run: npx vitest run --coverage --coverage.thresholds.lines=85 --coverage.thresholds.branches=80
-
-      - run: npm run build
 
   audit:
     name: Dependency audit

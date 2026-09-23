@@ -322,10 +322,22 @@ demand. No scheduled run.
 
 | Job | What it proves |
 |---|---|
-| `build` | `eslint`, the suite with a coverage floor (85% lines, 80% branches) and a production build, on Node 20.19 and 24. 20.19 is the floor `engines.node` declares |
+| `build` | `eslint` and a production build on Node 20.19, 22 and 24. 20.19 is the floor `engines.node` declares, so the claim is checked rather than asserted |
+| `test` | The suite with a coverage floor (85% lines, 80% branches), on Node 22 and 24 |
 | `audit` | `npm audit --omit=dev --audit-level=low`, because the runtime tree is react and react-dom only, so any advisory there is real. The whole tree is checked separately at `high` |
 | `hygiene` | Plain ASCII, the entity forms of the same characters, and a check that no `node_modules`, `dist`, `coverage` or capture harness is tracked |
 | `readme-pair` | Regenerates `README-light.md` and fails on a diff; checks every locally referenced image exists |
+
+**Why the suite does not run on the 20.19 floor.** jsdom 30 reaches for
+`webidl.util.markAsUncloneable`, which Node added in 22. On 20.19 every vitest
+worker dies before a single test file loads, with
+`TypeError: webidl.util.markAsUncloneable is not a function`. That is a limit of
+the test environment, not of the app: the build passes on 20.19 and the app runs
+there, so `engines.node` stays as it is and the two jobs are split.
+
+Worth knowing about the failure mode: when the workers die, vitest prints
+`Test Files no tests` and would otherwise **exit 0**. The coverage floor is what
+turns a suite that ran nothing into a red build.
 
 The tracked-output check is enforced rather than trusted to `.gitignore`:
 `node_modules` was tracked here until 2026-08-27, and `git add -f` ignores
